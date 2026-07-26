@@ -47,7 +47,7 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
 
   const channel = channels.find((c) => c.id === decodedId);
 
-  if (!channel || !channel.streamUrl) {
+  if (!channel) {
     notFound();
   }
 
@@ -60,6 +60,8 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
         c.categories.some((cat) => cat === primaryCategory)
     )
     .slice(0, 4);
+
+  const hasStream = Boolean(channel.streamUrl);
 
   return (
     <div className="w-full space-y-8 py-4">
@@ -74,15 +76,47 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
         </Link>
       </div>
 
-      {/* Main Player Chrome Panel (product-mockup-tile style) */}
+      {/* Main Player / Details Chrome Panel */}
       <div className="bg-surface-1 border border-hairline rounded-xl p-3 md:p-6 space-y-6 shadow-2xl">
-        {/* HLS Video Player */}
-        <VideoPlayer
-          src={channel.streamUrl}
-          streamUrls={channel.streamUrls}
-          channelName={channel.name}
-          autoPlay={true}
-        />
+        {hasStream ? (
+          /* HLS Video Player */
+          <VideoPlayer
+            src={channel.streamUrl!}
+            streamUrls={channel.streamUrls}
+            channelName={channel.name}
+            autoPlay={true}
+          />
+        ) : (
+          /* No Stream Available Card Placeholder */
+          <div className="w-full aspect-video bg-surface-2 rounded-xl border border-hairline p-6 md:p-12 flex flex-col items-center justify-center text-center space-y-4 shadow-inner relative overflow-hidden">
+            <div className="w-16 h-16 rounded-full bg-surface-1 border border-hairline flex items-center justify-center text-ink-muted shadow-md">
+              <ChannelLogo src={channel.logo} name={channel.name} className="w-12 h-12" />
+            </div>
+
+            <div className="max-w-md space-y-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-canvas text-ink-muted border border-hairline px-3 py-1 rounded-pill">
+                <Info className="w-3.5 h-3.5 text-amber-400" />
+                <span>No Direct Stream Link Available</span>
+              </span>
+              <h2 className="text-xl md:text-2xl font-semibold text-ink">{channel.name}</h2>
+              <p className="text-xs md:text-sm text-ink-muted leading-relaxed">
+                This channel is listed in the IPTV database, but no active HLS broadcast stream URL is currently provided for in-browser playback.
+              </p>
+            </div>
+
+            {channel.website && (
+              <a
+                href={channel.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-accent-blue hover:bg-accent-blue/90 text-white text-xs font-semibold px-5 py-2.5 rounded-pill transition-all active:scale-95 shadow-lg pt-2"
+              >
+                <Globe className="w-4 h-4" />
+                <span>Visit Official Channel Website</span>
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Channel Details Banner */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
@@ -97,10 +131,16 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
                 <h1 className="display-md text-ink font-semibold">
                   {channel.name}
                 </h1>
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-canvas text-semantic-success border border-hairline px-2 py-0.5 rounded-full">
-                  <Signal className="w-2.5 h-2.5 animate-pulse" />
-                  Live HLS
-                </span>
+                {hasStream ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-canvas text-semantic-success border border-hairline px-2 py-0.5 rounded-full">
+                    <Signal className="w-2.5 h-2.5 animate-pulse" />
+                    Live HLS
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-canvas text-ink-muted border border-hairline px-2 py-0.5 rounded-full">
+                    Metadata Only
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">

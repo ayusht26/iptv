@@ -19,7 +19,7 @@ export default async function HomePage() {
       <section className="text-center max-w-3xl mx-auto space-y-6 px-4">
         <div className="inline-flex items-center gap-2 bg-surface-1 border border-hairline px-3.5 py-1.5 rounded-pill text-xs text-ink-muted shadow-sm">
           <span className="w-2 h-2 rounded-full bg-semantic-success animate-pulse" />
-          <span>Over 10,000 Public Live Streams</span>
+          <span>Over 38,000 Public Live Channels</span>
         </div>
 
         <h1 className="display-xxl tracking-tight text-ink font-medium leading-[0.9]">
@@ -72,7 +72,7 @@ export default async function HomePage() {
             className="inline-flex items-center gap-2 bg-surface-1 hover:bg-surface-2 border border-hairline text-ink text-sm font-medium px-6 py-3 rounded-pill transition-all active:scale-95 shadow-md"
           >
             <Radio className="w-4 h-4 text-accent-blue" />
-            <span>Explore All 10,000+ Channels</span>
+            <span>Explore All 38,000+ Channels</span>
             <ArrowRight className="w-4 h-4 text-ink-muted" />
           </Link>
         </div>

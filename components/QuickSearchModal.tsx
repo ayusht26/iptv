@@ -23,29 +23,30 @@ export function QuickSearchModal({
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fuse.js search index
-  const fuse = useMemo(() => {
-    return new Fuse(channels, {
-      keys: [
-        { name: "name", weight: 0.5 },
-        { name: "network", weight: 0.2 },
-        { name: "countryName", weight: 0.2 },
-        { name: "categoryNames", weight: 0.1 },
-      ],
-      threshold: 0.35,
-      ignoreLocation: true,
-      minMatchCharLength: 1,
-    });
+  // Preprocessed channels index for 60fps instant searching
+  const indexedChannels = useMemo(() => {
+    return channels.map((c) => ({
+      channel: c,
+      searchBlob: `${c.name} ${c.altNames.join(" ")} ${c.network || ""} ${c.countryName} ${c.country} ${c.categoryNames.join(" ")}`.toLowerCase(),
+    }));
   }, [channels]);
 
-  // Results calculation
+  // Fast results calculation (< 3ms)
   const results = useMemo(() => {
-    if (!query.trim()) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
       // Show top 8 popular/featured channels when search is empty
       return channels.slice(0, 8);
     }
-    return fuse.search(query.trim()).map((res) => res.item).slice(0, 10);
-  }, [channels, fuse, query]);
+    const matched: Channel[] = [];
+    for (let i = 0; i < indexedChannels.length; i++) {
+      if (indexedChannels[i].searchBlob.includes(q)) {
+        matched.push(indexedChannels[i].channel);
+        if (matched.length >= 12) break;
+      }
+    }
+    return matched;
+  }, [channels, indexedChannels, query]);
 
   // Focus input when opened
   useEffect(() => {

@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Category, Country } from "@/lib/iptv/types";
-import { SlidersHorizontal, Globe, RotateCcw } from "lucide-react";
+import { SlidersHorizontal, Globe, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface FilterBarProps {
   categories: Category[];
@@ -21,9 +21,43 @@ export function FilterBar({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   const activeCategory = searchParams.get("category") || selectedCategory;
   const activeCountry = searchParams.get("country") || selectedCountry;
+
+  const updateScrollButtons = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+  };
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    updateScrollButtons();
+
+    el.addEventListener("scroll", updateScrollButtons, { passive: true });
+    window.addEventListener("resize", updateScrollButtons);
+    return () => {
+      el.removeEventListener("scroll", updateScrollButtons);
+      window.removeEventListener("resize", updateScrollButtons);
+    };
+  }, [categories]);
+
+  const scroll = (direction: "left" | "right") => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const distance = 300;
+    el.scrollBy({
+      left: direction === "left" ? -distance : distance,
+      behavior: "smooth",
+    });
+  };
 
   const updateParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -86,9 +120,24 @@ export function FilterBar({
         </div>
       </div>
 
-      {/* Bottom row: Category Pills (Horizontally scrollable on mobile) */}
-      <div className="relative w-full">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 scroll-smooth">
+      {/* Bottom row: Category Pills with Left & Right Nav Buttons */}
+      <div className="relative w-full flex items-center group/scroll">
+        {/* Left Nav Button */}
+        {canScrollLeft && (
+          <button
+            onClick={() => scroll("left")}
+            aria-label="Scroll categories left"
+            className="absolute left-0 z-10 p-2 rounded-full bg-surface-1 hover:bg-surface-2 text-ink border border-hairline shadow-lg backdrop-blur-md transition-all active:scale-95 -ml-3"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Scrollable Pills Container */}
+        <div
+          ref={scrollContainerRef}
+          className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 scroll-smooth w-full px-1"
+        >
           <button
             onClick={() => updateParam("category", "")}
             className={`shrink-0 text-xs font-medium px-4 py-2 rounded-pill transition-all ${
@@ -118,7 +167,19 @@ export function FilterBar({
             );
           })}
         </div>
+
+        {/* Right Nav Button */}
+        {canScrollRight && (
+          <button
+            onClick={() => scroll("right")}
+            aria-label="Scroll categories right"
+            className="absolute right-0 z-10 p-2 rounded-full bg-surface-1 hover:bg-surface-2 text-ink border border-hairline shadow-lg backdrop-blur-md transition-all active:scale-95 -mr-3"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </div>
   );
 }
+

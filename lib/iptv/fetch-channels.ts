@@ -68,7 +68,7 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
   }
 
   try {
-    const fetchOpts: RequestInit = { cache: "no-store" };
+    const fetchOpts: RequestInit = { next: { revalidate: 21600 } };
 
     const [
       channelsRes,
@@ -76,33 +76,35 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       logosRes,
       categoriesRes,
       countriesRes,
+      blocklistRes,
     ] = await Promise.all([
       fetch(`${API_BASE}/channels.json`, fetchOpts),
       fetch(`${API_BASE}/streams.json`, fetchOpts),
       fetch(`${API_BASE}/logos.json`, fetchOpts),
       fetch(`${API_BASE}/categories.json`, fetchOpts),
       fetch(`${API_BASE}/countries.json`, fetchOpts),
+      fetch(`${API_BASE}/blocklist.json`, fetchOpts).catch(() => null),
     ]);
 
-    const [
-      apiChannels,
-      apiStreams,
-      apiLogos,
-      apiCategories,
-      apiCountries,
-    ]: [
-      ApiChannel[],
-      ApiStream[],
-      ApiLogo[],
-      ApiCategory[],
-      ApiCountry[]
-    ] = await Promise.all([
-      channelsRes.json(),
-      streamsRes.json(),
-      logosRes.json(),
-      categoriesRes.json(),
-      countriesRes.json(),
-    ]);
+    const apiChannels: ApiChannel[] = await channelsRes.json();
+    const apiStreams: ApiStream[] = await streamsRes.json();
+    const apiLogos: ApiLogo[] = await logosRes.json();
+    const apiCategories: ApiCategory[] = await categoriesRes.json();
+    const apiCountries: ApiCountry[] = await countriesRes.json();
+    
+    let apiBlocklist: { channel: string }[] = [];
+    if (blocklistRes && blocklistRes.ok) {
+      try {
+        apiBlocklist = await blocklistRes.json();
+      } catch {
+        apiBlocklist = [];
+      }
+    }
+
+    const blocklistSet = new Set<string>();
+    apiBlocklist.forEach((b) => {
+      if (b.channel) blocklistSet.add(b.channel);
+    });
 
     // Build Maps for fast O(1) lookups
     const categoryMap = new Map<string, string>();
@@ -149,10 +151,9 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
     const channels: Channel[] = [];
 
     apiChannels.forEach((ch) => {
-      if (ch.closed || ch.is_nsfw) return;
+      if (ch.closed || ch.is_nsfw || blocklistSet.has(ch.id)) return;
 
       const streamInfo = streamMap.get(ch.id);
-      if (!streamInfo || !streamInfo.urls.length) return;
 
       const categories = ch.categories || [];
       const categoryNames = categories
@@ -172,9 +173,9 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
         categories,
         categoryNames,
         logo: logoMap.get(ch.id) || null,
-        streamUrl: streamInfo.urls[0],
-        streamUrls: streamInfo.urls,
-        quality: streamInfo.quality,
+        streamUrl: streamInfo?.urls[0] || null,
+        streamUrls: streamInfo?.urls || [],
+        quality: streamInfo?.quality || null,
         website: ch.website || null,
       });
     });

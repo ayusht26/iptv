@@ -81,7 +81,7 @@ export function ChannelBrowseGrid({
       <section className="text-center py-6 md:py-10 space-y-4 max-w-5xl mx-auto px-4">
         <div className="inline-flex items-center gap-2 bg-surface-1 border border-hairline px-3.5 py-1.5 rounded-pill text-xs text-ink-muted shadow-sm">
           <span className="w-2 h-2 rounded-full bg-semantic-success animate-pulse" />
-          <span>Over 10,000 Live Public Streams</span>
+          <span>Over 38,000 Public Live Channels</span>
         </div>
 
         <h1 className="display-xl md:display-xxl tracking-tight text-ink font-medium leading-[0.95] md:leading-[0.88]">
