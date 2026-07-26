@@ -199,9 +199,6 @@ export function QuickSearchModal({
               <kbd className="bg-surface-2 border border-hairline px-1.5 py-0.5 rounded text-[10px]">↵</kbd> Select channel
             </span>
           </div>
-          <span className="inline-flex items-center gap-1 text-accent-blue">
-            <Sparkles className="w-3 h-3" /> IPTV Only Search
-          </span>
         </div>
       </div>
     </div>

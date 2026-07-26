@@ -15,7 +15,6 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
   const pathname = usePathname();
 
   const navItems = [
-    { label: "Browse", href: "/categories" },
     { label: "Categories", href: "/categories" },
     { label: "About", href: "/about" },
   ];

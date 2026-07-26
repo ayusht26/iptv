@@ -1,11 +1,9 @@
 import React from "react";
 import { fetchIPTVData } from "@/lib/iptv/fetch-channels";
 import { HomeHeroActions } from "@/components/HomeHeroActions";
-import { HeroShowcaseGraphic } from "@/components/HeroShowcaseGraphic";
-import { GradientSpotlightCard } from "@/components/GradientSpotlightCard";
 import { ChannelCard } from "@/components/ChannelCard";
 import Link from "next/link";
-import { ArrowRight, Tv, Radio, Sparkles } from "lucide-react";
+import { ArrowRight, Tv, Radio } from "lucide-react";
 
 export const revalidate = 21600;
 
@@ -16,60 +14,31 @@ export default async function HomePage() {
   const featuredChannels = channels.slice(0, 8);
 
   return (
-    <div className="w-full space-y-16 py-6 md:py-12">
-      {/* Hero Section (Panel Reader layout) */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        {/* Left Column: Headline, Subhead, CTAs */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 bg-surface-1 border border-hairline px-3.5 py-1.5 rounded-pill text-xs text-ink-muted shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-semantic-success animate-pulse" />
-            <span>Over 10,000 Public Live Streams</span>
-          </div>
+    <div className="w-full space-y-16 py-8 md:py-16">
+      {/* Clean & Aesthetic Centered Hero Section */}
+      <section className="text-center max-w-3xl mx-auto space-y-6 px-4">
+        <div className="inline-flex items-center gap-2 bg-surface-1 border border-hairline px-3.5 py-1.5 rounded-pill text-xs text-ink-muted shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-semantic-success animate-pulse" />
+          <span>Over 10,000 Public Live Streams</span>
+        </div>
 
-          <h1 className="display-xxl tracking-tight text-ink font-medium leading-[0.9]">
-            Watch TV. <br />
-            <span className="text-ink-muted">Anywhere.</span>
-          </h1>
+        <h1 className="display-xxl tracking-tight text-ink font-medium leading-[0.9]">
+          Watch TV. <br />
+          <span className="text-ink-muted">Anywhere.</span>
+        </h1>
 
-          <p className="text-base md:text-lg text-ink-muted leading-relaxed max-w-xl">
-            A clean, focused live streaming experience. Browse thousands of publicly available live channels by category and country — no account needed.
-          </p>
+        <p className="text-base md:text-lg text-ink-muted leading-relaxed max-w-xl mx-auto">
+          A clean, focused live streaming experience. Browse thousands of publicly available live channels by category and country — no account needed.
+        </p>
 
+        <div className="flex justify-center">
           <HomeHeroActions />
-        </div>
-
-        {/* Right Column: 3D Tilted Card Stack Graphic */}
-        <div className="lg:col-span-5">
-          <HeroShowcaseGraphic channels={channels} />
-        </div>
-      </section>
-
-      {/* Signature Spotlight Cards Section */}
-      <section className="space-y-4 pt-6">
-        <div className="flex items-center gap-2 text-ink font-semibold text-sm">
-          <Sparkles className="w-4 h-4 text-accent-blue" />
-          <h2>Spotlight Collections</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <GradientSpotlightCard
-            title="Sports & News Live"
-            subtitle="Stream high-definition sports, live scores, and global news coverage 24/7."
-            category="sports"
-            variant="violet"
-          />
-          <GradientSpotlightCard
-            title="Music & Entertainment"
-            subtitle="Discover live music broadcasts, concert streams, and continuous cinema feeds."
-            category="music"
-            variant="magenta"
-          />
         </div>
       </section>
 
       {/* Featured Popular Channels Section */}
       <section className="space-y-6 pt-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-hairline-soft pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-ink font-semibold text-base">
               <Tv className="w-4 h-4 text-accent-blue" />
@@ -96,7 +65,7 @@ export default async function HomePage() {
           ))}
         </div>
 
-        {/* Big Bottom CTA to Browse */}
+        {/* Bottom CTA to Categories */}
         <div className="text-center pt-8">
           <Link
             href="/categories"

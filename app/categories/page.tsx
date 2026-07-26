@@ -25,16 +25,7 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
   const country = resolvedParams?.country || "";
 
   return (
-    <div className="py-4 space-y-6">
-      <div className="space-y-2">
-        <h1 className="display-lg text-ink font-semibold tracking-tight">
-          Browse Live Channels
-        </h1>
-        <p className="text-sm text-ink-muted">
-          Filter thousands of live public TV streams by category, country, or keyword.
-        </p>
-      </div>
-
+    <div className="py-2">
       <ChannelBrowseGrid
         channels={channels}
         categories={categories}

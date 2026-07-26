@@ -5,7 +5,6 @@ import Fuse from "fuse.js";
 import { Channel, Category, Country } from "@/lib/iptv/types";
 import { ChannelCard } from "./ChannelCard";
 import { FilterBar } from "./FilterBar";
-import { GradientSpotlightCard } from "./GradientSpotlightCard";
 import { ChannelCardSkeleton } from "./ChannelCardSkeleton";
 import { Search, Tv, X, ChevronDown, Sparkles } from "lucide-react";
 
@@ -162,32 +161,9 @@ export function ChannelBrowseGrid({
       ) : filteredChannels.length > 0 ? (
         <div className="space-y-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {displayedChannels.map((channel, index) => {
-              const showFirstSpotlight = index === 3;
-              const showSecondSpotlight = index === 15;
-
-              return (
-                <React.Fragment key={channel.id}>
-                  {showFirstSpotlight && (
-                    <GradientSpotlightCard
-                      title="Sports & News Live"
-                      subtitle="Stream high-definition sports and global news coverage 24/7."
-                      category="sports"
-                      variant="violet"
-                    />
-                  )}
-                  {showSecondSpotlight && (
-                    <GradientSpotlightCard
-                      title="Music & Entertainment"
-                      subtitle="Discover live music broadcasts, concert streams, and continuous cinema feeds."
-                      category="music"
-                      variant="magenta"
-                    />
-                  )}
-                  <ChannelCard channel={channel} />
-                </React.Fragment>
-              );
-            })}
+            {displayedChannels.map((channel) => (
+              <ChannelCard key={channel.id} channel={channel} />
+            ))}
           </div>
 
           {/* Load More Pagination Button */}
