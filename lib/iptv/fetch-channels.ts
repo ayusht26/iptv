@@ -63,11 +63,12 @@ const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
   const now = Date.now();
   if (cachedData && now - cachedData.timestamp < CACHE_TTL_MS) {
+    console.log("⚡ IPTV data served from in-memory cache");
     return cachedData.data;
   }
 
   try {
-    const fetchOpts: RequestInit = { next: { revalidate: 21600 } };
+    const fetchOpts: RequestInit = { cache: "no-store" };
 
     const [
       channelsRes,
@@ -204,6 +205,7 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
     };
 
     cachedData = { data: result, timestamp: now };
+    console.log("🌐 IPTV data successfully fetched & cached into memory");
     return result;
   } catch (error) {
     console.error("Error fetching IPTV data:", error);
