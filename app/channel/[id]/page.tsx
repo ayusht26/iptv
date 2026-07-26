@@ -4,7 +4,7 @@ import { ChannelLogo } from "@/components/ChannelLogo";
 import { ChannelCard } from "@/components/ChannelCard";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Globe, Radio, Signal, Sparkles } from "lucide-react";
+import { ArrowLeft, Globe, Info, Radio, Signal, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 
 export const revalidate = 21600;
@@ -137,6 +137,16 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
             </a>
           )}
         </div>
+      </div>
+
+      {/* Stream Buffering Disclaimer Notice */}
+      <div className="bg-surface-1/80 border border-hairline rounded-xl p-4 flex items-center gap-3.5 text-xs text-ink-muted shadow-md">
+        <div className="w-8 h-8 rounded-full bg-accent-blue/10 border border-accent-blue/20 flex items-center justify-center shrink-0 text-accent-blue">
+          <Info className="w-4 h-4" />
+        </div>
+        <p className="leading-relaxed">
+          <strong className="text-ink font-semibold">Live Stream Note:</strong> Some channels may buffer for the initial 5–6 seconds while connecting to external broadcast servers and loading stream fragments before playing smoothly.
+        </p>
       </div>
 
       {/* More Like This Section */}

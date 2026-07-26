@@ -40,8 +40,8 @@ export function VideoPlayer({
 
   const [currentStreamIndex, setCurrentStreamIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true); // Start muted to satisfy browser autoplay policy
-  const [volume, setVolume] = useState(0.8);
+  const [isMuted, setIsMuted] = useState(false); // Start unmuted at 100% volume
+  const [volume, setVolume] = useState(1.0); // 100% volume
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -54,12 +54,16 @@ export function VideoPlayer({
   // Safe play helper to handle promise rejections cleanly
   const safePlay = useCallback(async (video: HTMLVideoElement) => {
     try {
+      video.muted = false;
+      video.volume = 1.0;
       await video.play();
       setIsPlaying(true);
+      setIsMuted(false);
+      setNeedUserUnmute(false);
     } catch (err: unknown) {
       const errorName = (err as Error)?.name;
       if (errorName === "NotAllowedError") {
-        // Autoplay blocked due to audio policy
+        // Autoplay with sound blocked due to browser audio policy
         video.muted = true;
         setIsMuted(true);
         setNeedUserUnmute(true);
@@ -91,8 +95,8 @@ export function VideoPlayer({
     setHasError(false);
     setErrorMessage("");
 
-    // Start muted for guaranteed autoplay success
-    video.muted = isMuted;
+    video.volume = 1.0;
+    video.muted = false;
 
     // Check Safari / Native HLS Support
     if (video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -104,7 +108,11 @@ export function VideoPlayer({
       hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        backBufferLength: 60,
+        liveSyncDurationCount: 1, // Start playback immediately from live edge without buffer lag
+        initialLiveManifestSize: 1,
+        maxBufferLength: 15,
+        maxMaxBufferLength: 30,
+        backBufferLength: 30,
         manifestLoadingTimeOut: 10000,
         levelLoadingTimeOut: 10000,
         fragLoadingTimeOut: 10000,
@@ -166,9 +174,9 @@ export function VideoPlayer({
         video.load();
       }
     };
-  }, [activeStreamUrl, autoPlay, currentStreamIndex, allStreams.length, isMuted, safePlay]);
+  }, [activeStreamUrl, autoPlay, currentStreamIndex, allStreams.length, safePlay]);
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
 
@@ -178,7 +186,7 @@ export function VideoPlayer({
       video.pause();
       setIsPlaying(false);
     }
-  };
+  }, [safePlay]);
 
   const toggleMute = () => {
     const video = videoRef.current;
@@ -191,8 +199,8 @@ export function VideoPlayer({
     if (nextMuted) {
       setVolume(0);
     } else {
-      setVolume(0.8);
-      video.volume = 0.8;
+      setVolume(1.0);
+      video.volume = 1.0;
     }
   };
 
@@ -209,14 +217,77 @@ export function VideoPlayer({
     }
   };
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
       containerRef.current.requestFullscreen().catch(console.error);
     } else {
       document.exitFullscreen().catch(console.error);
     }
-  };
+  }, []);
+
+  const adjustVolume = useCallback((delta: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    setVolume((prevVol) => {
+      let nextVol = Math.round((prevVol + delta) * 10) / 10;
+      nextVol = Math.max(0, Math.min(1, nextVol));
+
+      video.volume = nextVol;
+      if (nextVol === 0) {
+        video.muted = true;
+        setIsMuted(true);
+      } else {
+        video.muted = false;
+        setIsMuted(false);
+      }
+      setNeedUserUnmute(false);
+      return nextVol;
+    });
+
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (videoRef.current && !videoRef.current.paused) {
+        setShowControls(false);
+      }
+    }, 2500);
+  }, []);
+
+  // Standard Keyboard Shortcuts: Space (Play/Pause), F (Fullscreen), ArrowUp/ArrowDown (Volume)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (
+        activeEl &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          activeEl.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        adjustVolume(0.1);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        adjustVolume(-0.1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [togglePlay, toggleFullscreen, adjustVolume]);
 
   const handleMouseMove = () => {
     setShowControls(true);

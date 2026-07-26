@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Category, Country } from "@/lib/iptv/types";
 import { SlidersHorizontal, Globe, RotateCcw } from "lucide-react";
 
@@ -19,7 +19,11 @@ export function FilterBar({
   selectedCountry,
 }: FilterBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const activeCategory = searchParams.get("category") || selectedCategory;
+  const activeCountry = searchParams.get("country") || selectedCountry;
 
   const updateParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -28,14 +32,17 @@ export function FilterBar({
     } else {
       params.delete(key);
     }
-    router.push(`/?${params.toString()}`, { scroll: false });
+    const queryString = params.toString();
+    router.push(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
   };
 
   const handleReset = () => {
-    router.push("/", { scroll: false });
+    router.push(pathname, { scroll: false });
   };
 
-  const hasActiveFilters = Boolean(selectedCategory || selectedCountry);
+  const hasActiveFilters = Boolean(activeCategory || activeCountry);
 
   return (
     <div id="categories" className="w-full flex flex-col gap-4 py-4">
@@ -53,7 +60,7 @@ export function FilterBar({
           <div className="relative flex items-center">
             <Globe className="w-3.5 h-3.5 text-ink-muted absolute left-3 pointer-events-none" />
             <select
-              value={selectedCountry}
+              value={activeCountry}
               onChange={(e) => updateParam("country", e.target.value)}
               className="bg-surface-1 text-ink border border-hairline hover:border-hairline/80 focus:border-accent-blue rounded-md pl-8 pr-8 py-2 text-xs appearance-none cursor-pointer focus:outline-none transition-colors"
             >
@@ -84,10 +91,10 @@ export function FilterBar({
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 scroll-smooth">
           <button
             onClick={() => updateParam("category", "")}
-            className={`shrink-0 text-xs font-medium px-4 py-2 rounded-pill transition-colors ${
-              !selectedCategory
+            className={`shrink-0 text-xs font-medium px-4 py-2 rounded-pill transition-all ${
+              !activeCategory
                 ? "bg-surface-2 text-ink border border-hairline shadow-sm font-semibold"
-                : "bg-canvas text-ink-muted hover:text-ink border border-transparent"
+                : "bg-canvas text-ink-muted hover:text-ink border border-transparent hover:bg-surface-1"
             }`}
           >
             All Categories
@@ -95,15 +102,15 @@ export function FilterBar({
 
           {categories.map((cat) => {
             const isSelected =
-              selectedCategory.toLowerCase() === cat.id.toLowerCase();
+              activeCategory.toLowerCase() === cat.id.toLowerCase();
             return (
               <button
                 key={cat.id}
-                onClick={() => updateParam("category", cat.id)}
-                className={`shrink-0 text-xs font-medium px-4 py-2 rounded-pill transition-colors capitalize ${
+                onClick={() => updateParam("category", isSelected ? "" : cat.id)}
+                className={`shrink-0 text-xs font-medium px-4 py-2 rounded-pill transition-all capitalize ${
                   isSelected
                     ? "bg-surface-2 text-ink border border-hairline shadow-sm font-semibold"
-                    : "bg-canvas text-ink-muted hover:text-ink border border-transparent"
+                    : "bg-canvas text-ink-muted hover:text-ink border border-transparent hover:bg-surface-1"
                 }`}
               >
                 {cat.name}

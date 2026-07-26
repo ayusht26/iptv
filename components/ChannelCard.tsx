@@ -16,7 +16,7 @@ export function ChannelCard({ channel }: ChannelCardProps) {
   return (
     <Link
       href={`/channel/${encodeURIComponent(channel.id)}`}
-      className="group relative bg-surface-1 hover:bg-surface-2 border border-hairline hover:border-hairline/80 rounded-lg p-3.5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-sm"
+      className="group relative bg-surface-1 hover:bg-surface-2 border border-hairline hover:border-hairline/90 rounded-lg p-3.5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-fade-in"
     >
       <div>
         {/* Card Header: Logo & Country Tag */}
@@ -60,7 +60,7 @@ export function ChannelCard({ channel }: ChannelCardProps) {
 
         <span className="inline-flex items-center gap-1 text-ink group-hover:text-accent-blue font-medium transition-colors">
           <span>Watch</span>
-          <div className="w-6 h-6 rounded-full bg-white text-black group-hover:bg-accent-blue group-hover:text-black flex items-center justify-center transition-colors">
+          <div className="w-6 h-6 rounded-full bg-white text-black group-hover:bg-accent-blue group-hover:scale-110 flex items-center justify-center transition-all duration-200">
             <Play className="w-3 h-3 fill-current ml-0.5" />
           </div>
         </span>

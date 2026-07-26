@@ -21,7 +21,7 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-canvas/90 backdrop-blur-md border-b border-hairline-soft h-[56px] flex items-center">
-      <div className="max-w-[1200px] w-full mx-auto px-4 md:px-6 flex items-center justify-between">
+      <div className="max-w-[1200px] w-full mx-auto px-4 md:px-6 flex items-center justify-between relative">
         {/* Left: Brand Wordmark */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-full bg-surface-2 border border-hairline flex items-center justify-center text-ink group-hover:border-accent-blue/50 transition-colors">
@@ -32,8 +32,8 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
           </span>
         </Link>
 
-        {/* Center: Desktop Nav links */}
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Center: Aesthetic Centered Pill Nav */}
+        <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 bg-surface-1/90 border border-hairline/80 p-1 rounded-pill shadow-sm backdrop-blur-sm">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
 
@@ -41,10 +41,10 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`text-sm font-medium transition-colors ${
+                className={`text-xs font-medium px-4 py-1.5 rounded-pill transition-all ${
                   isActive
-                    ? "text-ink font-semibold"
-                    : "text-ink-muted hover:text-ink"
+                    ? "bg-surface-2 text-ink shadow-sm border border-hairline"
+                    : "text-ink-muted hover:text-ink hover:bg-surface-2/50"
                 }`}
               >
                 {item.label}
