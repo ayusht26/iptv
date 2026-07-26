@@ -38,8 +38,12 @@ export default async function RootLayout({
     <html
       lang="en"
       className={`${geistDisplay.variable} ${interBody.variable} h-full antialiased dark`}
+      suppressHydrationWarning
     >
-      <body className="bg-canvas text-ink min-h-full flex flex-col selection:bg-accent-blue/30 selection:text-white">
+      <body
+        className="bg-canvas text-ink min-h-full flex flex-col selection:bg-accent-blue/30 selection:text-white"
+        suppressHydrationWarning
+      >
         <LayoutWrapper channels={channels}>{children}</LayoutWrapper>
       </body>
     </html>

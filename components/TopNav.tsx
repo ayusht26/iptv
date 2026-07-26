@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Tv, Menu, X, Search } from "lucide-react";
+import { Tv, Menu, X, Search, Home, Grid, Info } from "lucide-react";
 import { GithubIcon } from "@/components/icons/SocialIcons";
+import { NavBar } from "@/components/ui/tubelight-navbar";
 
 interface TopNavProps {
   onOpenSearch?: () => void;
@@ -12,11 +12,11 @@ interface TopNavProps {
 
 export function TopNav({ onOpenSearch }: TopNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
 
-  const navItems = [
-    { label: "Categories", href: "/categories" },
-    { label: "About", href: "/about" },
+  const tubelightNavItems = [
+    { name: "Home", url: "/", icon: Home },
+    { name: "Categories", url: "/categories", icon: Grid },
+    { name: "About", url: "/about", icon: Info },
   ];
 
   return (
@@ -32,30 +32,15 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
           </span>
         </Link>
 
-        {/* Center: Aesthetic Centered Pill Nav */}
-        <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2 bg-surface-1/90 border border-hairline/80 p-1 rounded-pill shadow-sm backdrop-blur-sm">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`text-xs font-medium px-4 py-1.5 rounded-pill transition-all ${
-                  isActive
-                    ? "bg-surface-2 text-ink shadow-sm border border-hairline"
-                    : "text-ink-muted hover:text-ink hover:bg-surface-2/50"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Center: Tubelight Navbar Component (Desktop) */}
+        <NavBar
+          items={tubelightNavItems}
+          className="hidden md:flex absolute left-1/2 -translate-x-1/2"
+        />
 
         {/* Right: Quick Search Button & GitHub Link */}
         <div className="flex items-center gap-3">
-          {/* Navbar Search Input Button (Panel Reader style) */}
+          {/* Navbar Search Input Button */}
           <button
             onClick={onOpenSearch}
             className="hidden sm:flex items-center gap-2.5 bg-surface-1 hover:bg-surface-2 text-ink-muted hover:text-ink text-xs font-normal px-3.5 py-1.5 rounded-pill border border-hairline transition-all shadow-inner"
@@ -103,7 +88,7 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed top-[56px] inset-x-0 bg-canvas/98 border-b border-hairline p-6 flex flex-col gap-4 animate-in slide-in-from-top-2 duration-200 shadow-2xl z-50">
+        <div className="md:hidden fixed top-[56px] inset-x-0 bg-canvas/98 border-b border-hairline p-6 flex flex-col gap-5 animate-in slide-in-from-top-2 duration-200 shadow-2xl z-50">
           <button
             onClick={() => {
               setMobileMenuOpen(false);
@@ -115,24 +100,20 @@ export function TopNav({ onOpenSearch }: TopNavProps) {
               <Search className="w-4 h-4" />
               <span>Search channels...</span>
             </span>
-            <kbd className="text-xs bg-surface-2 border border-hairline px-2 py-0.5 rounded">⌘K</kbd>
+            <kbd className="text-xs bg-surface-2 border border-hairline px-2 py-0.5 rounded">
+              ⌘K
+            </kbd>
           </button>
 
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base font-medium text-ink hover:text-accent-blue py-2 border-b border-hairline-soft"
-            >
-              {item.label}
-            </Link>
-          ))}
+          <div className="py-2 flex justify-center">
+            <NavBar items={tubelightNavItems} />
+          </div>
+
           <a
             href="https://github.com/ayusht26/iptv"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 bg-surface-1 text-ink text-sm font-medium px-4 py-2.5 rounded-pill border border-hairline mt-2"
+            className="inline-flex items-center justify-center gap-2 bg-surface-1 text-ink text-sm font-medium px-4 py-2.5 rounded-pill border border-hairline mt-1"
           >
             <GithubIcon className="w-4 h-4" />
             <span>View on GitHub</span>
