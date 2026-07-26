@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #090909;
+  --color-surface-1: #141414;
+  --color-surface-2: #1c1c1c;
+  --color-hairline: #262626;
+  --color-hairline-soft: #1a1a1a;
+  --color-ink: #ffffff;
+  --color-ink-muted: #999999;
+  --color-accent-blue: #0099ff;
+  --color-gradient-magenta: #d44df0;
+  --color-gradient-violet: #6a4cf5;
+  --color-gradient-orange: #ff7a3d;
+  --color-gradient-coral: #ff5577;
+  --color-semantic-success: #22c55e;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 15px;
+  --radius-xl: 20px;
+  --radius-xxl: 30px;
+  --radius-pill: 100px;
+  --radius-full: 9999px;
+}
+
+:root {
+  --background: #090909;
+  --foreground: #ffffff;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter-body), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-feature-settings: "cv01", "cv05", "cv09", "cv11", "ss03", "ss07";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+  font-family: var(--font-geist-display), system-ui, sans-serif;
+}
+
+.display-xxl {
+  font-family: var(--font-geist-display), system-ui, sans-serif;
+  font-size: clamp(40px, 7.5vw, 110px);
+  font-weight: 500;
+  line-height: 0.85;
+  letter-spacing: -0.05em;
+}
+
+.display-xl {
+  font-family: var(--font-geist-display), system-ui, sans-serif;
+  font-size: clamp(32px, 5.5vw, 85px);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.display-lg {
+  font-family: var(--font-geist-display), system-ui, sans-serif;
+  font-size: clamp(28px, 4vw, 62px);
+  font-weight: 500;
+  line-height: 1.0;
+  letter-spacing: -0.05em;
+}
+
+.display-md {
+  font-family: var(--font-geist-display), system-ui, sans-serif;
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 500;
+  line-height: 1.13;
+  letter-spacing: -1px;
+}
+
+/* Hide scrollbar for category filter bar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
