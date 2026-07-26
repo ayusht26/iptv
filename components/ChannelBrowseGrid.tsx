@@ -1,21 +1,20 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useDeferredValue, useTransition } from "react";
 import Fuse from "fuse.js";
-import { Channel, Category, Country, Language } from "@/lib/iptv/types";
+import { Channel, Category, Country } from "@/lib/iptv/types";
 import { ChannelCard } from "./ChannelCard";
 import { FilterBar } from "./FilterBar";
 import { GradientSpotlightCard } from "./GradientSpotlightCard";
-import { Search, Tv, Layers, X, ChevronDown } from "lucide-react";
+import { ChannelCardSkeleton } from "./ChannelCardSkeleton";
+import { Search, Tv, X, ChevronDown, Sparkles } from "lucide-react";
 
 interface ChannelBrowseGridProps {
   channels: Channel[];
   categories: Category[];
   countries: Country[];
-  languages: Language[];
   initialCategory?: string;
   initialCountry?: string;
-  initialLanguage?: string;
 }
 
 const ITEMS_PER_PAGE = 48;
@@ -24,39 +23,38 @@ export function ChannelBrowseGrid({
   channels,
   categories,
   countries,
-  languages,
   initialCategory = "",
   initialCountry = "",
-  initialLanguage = "",
 }: ChannelBrowseGridProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const [isPending] = useTransition();
 
-  // Initialize Fuse.js index for fuzzy search over channel name, network, country, altNames
+  // Initialize Fuse.js index for fast fuzzy search over channel name, network, country
   const fuse = useMemo(() => {
     return new Fuse(channels, {
       keys: [
-        { name: "name", weight: 0.4 },
+        { name: "name", weight: 0.5 },
         { name: "network", weight: 0.2 },
         { name: "countryName", weight: 0.2 },
         { name: "country", weight: 0.1 },
-        { name: "categoryNames", weight: 0.1 },
       ],
       threshold: 0.35,
       ignoreLocation: true,
+      minMatchCharLength: 2,
     });
   }, [channels]);
 
-  // Combined Filter + Fuzzy Search Logic
+  // Non-blocking fuzzy search + category/country filter using deferredSearchQuery
   const filteredChannels = useMemo(() => {
     let result = channels;
 
-    // 1. Search Query
-    if (searchQuery.trim()) {
-      result = fuse.search(searchQuery.trim()).map((res) => res.item);
+    const trimmedSearch = deferredSearchQuery.trim();
+    if (trimmedSearch.length > 0) {
+      result = fuse.search(trimmedSearch).map((res) => res.item);
     }
 
-    // 2. Category Filter
     if (initialCategory) {
       const lowerCat = initialCategory.toLowerCase();
       result = result.filter((c) =>
@@ -64,14 +62,13 @@ export function ChannelBrowseGrid({
       );
     }
 
-    // 3. Country Filter
     if (initialCountry) {
       const upperCountry = initialCountry.toUpperCase();
       result = result.filter((c) => c.country.toUpperCase() === upperCountry);
     }
 
     return result;
-  }, [channels, fuse, searchQuery, initialCategory, initialCountry]);
+  }, [channels, fuse, deferredSearchQuery, initialCategory, initialCountry]);
 
   // Paginated channels to render
   const displayedChannels = useMemo(() => {
@@ -79,6 +76,7 @@ export function ChannelBrowseGrid({
   }, [filteredChannels, visibleCount]);
 
   const hasMore = visibleCount < filteredChannels.length;
+  const isSearching = searchQuery !== deferredSearchQuery;
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
@@ -88,7 +86,7 @@ export function ChannelBrowseGrid({
     <div className="w-full space-y-10">
       {/* Hero Section */}
       <section className="text-center py-12 md:py-20 space-y-6 max-w-4xl mx-auto px-4">
-        <div className="inline-flex items-center gap-2 bg-surface-1 border border-hairline px-3.5 py-1.5 rounded-pill text-xs text-ink-muted">
+        <div className="inline-flex items-center gap-2 bg-surface-1 border border-hairline px-3.5 py-1.5 rounded-pill text-xs text-ink-muted shadow-sm">
           <span className="w-2 h-2 rounded-full bg-semantic-success animate-pulse" />
           <span>Over 10,000 Live Public Streams</span>
         </div>
@@ -99,7 +97,7 @@ export function ChannelBrowseGrid({
         </h1>
 
         <p className="text-base md:text-lg text-ink-muted max-w-2xl mx-auto leading-relaxed">
-          Browse, filter, and stream publicly available live TV channels by category, country, and network in an in-browser HLS player.
+          Browse, filter, and stream publicly available live TV channels by category and country in an in-browser HLS player.
         </p>
 
         {/* Hero Search Bar */}
@@ -113,12 +111,15 @@ export function ChannelBrowseGrid({
                 setSearchQuery(e.target.value);
                 setVisibleCount(ITEMS_PER_PAGE);
               }}
-              placeholder="Search by channel name, network, country (e.g. BBC, News, Sports)..."
+              placeholder="Search channels, networks, or countries (e.g. BBC, News, Sports)..."
               className="w-full bg-surface-1 text-ink placeholder:text-ink-muted/60 text-sm md:text-base border border-hairline hover:border-hairline/80 focus:border-accent-blue focus:ring-1 focus:ring-accent-blue rounded-pill pl-12 pr-10 py-3.5 focus:outline-none transition-all shadow-lg"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("");
+                  setVisibleCount(ITEMS_PER_PAGE);
+                }}
                 className="absolute right-4 p-1 text-ink-muted hover:text-ink"
                 aria-label="Clear search"
               >
@@ -131,8 +132,11 @@ export function ChannelBrowseGrid({
             <span>
               Showing {filteredChannels.length.toLocaleString()} matching channels
             </span>
-            {searchQuery && (
-              <span className="text-accent-blue">Client-side fuzzy search active</span>
+            {isSearching && (
+              <span className="inline-flex items-center gap-1.5 text-accent-blue">
+                <Sparkles className="w-3 h-3 animate-spin" />
+                Filtering...
+              </span>
             )}
           </div>
         </div>
@@ -143,19 +147,22 @@ export function ChannelBrowseGrid({
         <FilterBar
           categories={categories}
           countries={countries}
-          languages={languages}
           selectedCategory={initialCategory}
           selectedCountry={initialCountry}
-          selectedLanguage={initialLanguage}
         />
       </div>
 
-      {/* Channel Grid */}
-      {filteredChannels.length > 0 ? (
+      {/* Channel Grid with Skeleton Loading */}
+      {isPending ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <ChannelCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : filteredChannels.length > 0 ? (
         <div className="space-y-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {displayedChannels.map((channel, index) => {
-              // Inject Gradient Spotlight Cards at strategic intervals (e.g. index 3 and 15)
               const showFirstSpotlight = index === 3;
               const showSecondSpotlight = index === 15;
 
@@ -171,7 +178,7 @@ export function ChannelBrowseGrid({
                   )}
                   {showSecondSpotlight && (
                     <GradientSpotlightCard
-                      title="Music & Movies"
+                      title="Music & Entertainment"
                       subtitle="Discover live music broadcasts, concert streams, and continuous cinema feeds."
                       category="music"
                       variant="magenta"
@@ -198,7 +205,7 @@ export function ChannelBrowseGrid({
         </div>
       ) : (
         /* Empty State */
-        <div className="bg-surface-1 border border-hairline rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12">
+        <div className="bg-surface-1 border border-hairline rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12 shadow-md">
           <div className="w-14 h-14 rounded-full bg-surface-2 border border-hairline flex items-center justify-center text-ink-muted mx-auto">
             <Tv className="w-7 h-7" />
           </div>

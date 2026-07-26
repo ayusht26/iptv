@@ -60,7 +60,7 @@ export function ChannelCard({ channel }: ChannelCardProps) {
 
         <span className="inline-flex items-center gap-1 text-ink group-hover:text-accent-blue font-medium transition-colors">
           <span>Watch</span>
-          <div className="w-6 h-6 rounded-full bg-ink text-on-primary group-hover:bg-accent-blue group-hover:text-ink flex items-center justify-center transition-colors">
+          <div className="w-6 h-6 rounded-full bg-white text-black group-hover:bg-accent-blue group-hover:text-black flex items-center justify-center transition-colors">
             <Play className="w-3 h-3 fill-current ml-0.5" />
           </div>
         </span>

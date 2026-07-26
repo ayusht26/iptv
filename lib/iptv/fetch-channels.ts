@@ -1,4 +1,4 @@
-import { Channel, Category, Country, Language } from "./types";
+import { Channel, Category, Country } from "./types";
 import { cache } from "react";
 
 const API_BASE = "https://iptv-org.github.io/api";
@@ -50,19 +50,13 @@ type ApiCountry = {
   name: string;
 };
 
-type ApiLanguage = {
-  code: string;
-  name: string;
-};
-
 type ProcessedData = {
   channels: Channel[];
   categories: Category[];
   countries: Country[];
-  languages: Language[];
 };
 
-// Module-level in-memory cache to deduplicate requests across components
+// Module-level in-memory cache
 let cachedData: { data: ProcessedData; timestamp: number } | null = null;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
@@ -81,14 +75,12 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       logosRes,
       categoriesRes,
       countriesRes,
-      languagesRes,
     ] = await Promise.all([
       fetch(`${API_BASE}/channels.json`, fetchOpts),
       fetch(`${API_BASE}/streams.json`, fetchOpts),
       fetch(`${API_BASE}/logos.json`, fetchOpts),
       fetch(`${API_BASE}/categories.json`, fetchOpts),
       fetch(`${API_BASE}/countries.json`, fetchOpts),
-      fetch(`${API_BASE}/languages.json`, fetchOpts),
     ]);
 
     const [
@@ -97,21 +89,18 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       apiLogos,
       apiCategories,
       apiCountries,
-      apiLanguages,
     ]: [
       ApiChannel[],
       ApiStream[],
       ApiLogo[],
       ApiCategory[],
-      ApiCountry[],
-      ApiLanguage[]
+      ApiCountry[]
     ] = await Promise.all([
       channelsRes.json(),
       streamsRes.json(),
       logosRes.json(),
       categoriesRes.json(),
       countriesRes.json(),
-      languagesRes.json(),
     ]);
 
     // Build Maps for fast O(1) lookups
@@ -125,13 +114,24 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       if (cou.code && cou.name) countryMap.set(cou.code, cou.name);
     });
 
-    const streamMap = new Map<string, { url: string; quality: string | null }>();
+    // Map channelId to ALL stream URLs (fallback list for maximum stream playback reliability)
+    const streamMap = new Map<string, { urls: string[]; quality: string | null }>();
     apiStreams.forEach((st) => {
-      if (st.channel && st.url && !streamMap.has(st.channel)) {
-        streamMap.set(st.channel, {
-          url: st.url,
-          quality: st.quality || null,
-        });
+      if (st.channel && st.url) {
+        const existing = streamMap.get(st.channel);
+        if (existing) {
+          if (!existing.urls.includes(st.url)) {
+            existing.urls.push(st.url);
+          }
+          if (!existing.quality && st.quality) {
+            existing.quality = st.quality;
+          }
+        } else {
+          streamMap.set(st.channel, {
+            urls: [st.url],
+            quality: st.quality || null,
+          });
+        }
       }
     });
 
@@ -151,7 +151,7 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       if (ch.closed || ch.is_nsfw) return;
 
       const streamInfo = streamMap.get(ch.id);
-      if (!streamInfo || !streamInfo.url) return;
+      if (!streamInfo || !streamInfo.urls.length) return;
 
       const categories = ch.categories || [];
       const categoryNames = categories
@@ -171,7 +171,8 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
         categories,
         categoryNames,
         logo: logoMap.get(ch.id) || null,
-        streamUrl: streamInfo.url,
+        streamUrl: streamInfo.urls[0],
+        streamUrls: streamInfo.urls,
         quality: streamInfo.quality,
         website: ch.website || null,
       });
@@ -196,15 +197,10 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       .map((c) => ({ code: c.code, name: c.name }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    const languages = apiLanguages
-      .map((l) => ({ code: l.code, name: l.name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
     const result: ProcessedData = {
       channels,
       categories,
       countries,
-      languages,
     };
 
     cachedData = { data: result, timestamp: now };
@@ -217,7 +213,6 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       channels: [],
       categories: [],
       countries: [],
-      languages: [],
     };
   }
 });

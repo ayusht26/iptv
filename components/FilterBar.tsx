@@ -2,25 +2,21 @@
 
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Category, Country, Language } from "@/lib/iptv/types";
-import { SlidersHorizontal, Globe, Languages, RotateCcw } from "lucide-react";
+import { Category, Country } from "@/lib/iptv/types";
+import { SlidersHorizontal, Globe, RotateCcw } from "lucide-react";
 
 interface FilterBarProps {
   categories: Category[];
   countries: Country[];
-  languages: Language[];
   selectedCategory: string;
   selectedCountry: string;
-  selectedLanguage: string;
 }
 
 export function FilterBar({
   categories,
   countries,
-  languages,
   selectedCategory,
   selectedCountry,
-  selectedLanguage,
 }: FilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,9 +35,7 @@ export function FilterBar({
     router.push("/", { scroll: false });
   };
 
-  const hasActiveFilters = Boolean(
-    selectedCategory || selectedCountry || selectedLanguage
-  );
+  const hasActiveFilters = Boolean(selectedCategory || selectedCountry);
 
   return (
     <div id="categories" className="w-full flex flex-col gap-4 py-4">
@@ -72,23 +66,6 @@ export function FilterBar({
             </select>
           </div>
 
-          {/* Language Selector */}
-          <div className="relative flex items-center">
-            <Languages className="w-3.5 h-3.5 text-ink-muted absolute left-3 pointer-events-none" />
-            <select
-              value={selectedLanguage}
-              onChange={(e) => updateParam("lang", e.target.value)}
-              className="bg-surface-1 text-ink border border-hairline hover:border-hairline/80 focus:border-accent-blue rounded-md pl-8 pr-8 py-2 text-xs appearance-none cursor-pointer focus:outline-none transition-colors"
-            >
-              <option value="">All Languages</option>
-              {languages.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Reset Filters */}
           {hasActiveFilters && (
             <button
@@ -109,7 +86,7 @@ export function FilterBar({
             onClick={() => updateParam("category", "")}
             className={`shrink-0 text-xs font-medium px-4 py-2 rounded-pill transition-colors ${
               !selectedCategory
-                ? "bg-surface-2 text-ink border border-hairline shadow-sm"
+                ? "bg-surface-2 text-ink border border-hairline shadow-sm font-semibold"
                 : "bg-canvas text-ink-muted hover:text-ink border border-transparent"
             }`}
           >
@@ -117,7 +94,8 @@ export function FilterBar({
           </button>
 
           {categories.map((cat) => {
-            const isSelected = selectedCategory.toLowerCase() === cat.id.toLowerCase();
+            const isSelected =
+              selectedCategory.toLowerCase() === cat.id.toLowerCase();
             return (
               <button
                 key={cat.id}

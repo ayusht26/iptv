@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 @theme {
+  --color-primary: #ffffff;
+  --color-on-primary: #000000;
   --color-canvas: #090909;
   --color-surface-1: #141414;
   --color-surface-2: #1c1c1c;
@@ -83,4 +85,3 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-

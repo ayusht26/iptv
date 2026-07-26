@@ -69,7 +69,7 @@ export function TopNav() {
 
           <Link
             href="/#browse"
-            className="inline-flex items-center gap-2 bg-ink hover:bg-ink/90 text-on-primary text-xs font-medium px-4 py-2 rounded-pill transition-transform active:scale-95 shadow-sm"
+            className="inline-flex items-center gap-2 bg-white hover:bg-white/90 text-black text-xs font-semibold px-4 py-2 rounded-pill transition-transform active:scale-95 shadow-sm"
           >
             <Play className="w-3 h-3 fill-current" />
             <span>Watch now</span>

@@ -79,6 +79,7 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
         {/* HLS Video Player */}
         <VideoPlayer
           src={channel.streamUrl}
+          streamUrls={channel.streamUrls}
           channelName={channel.name}
           autoPlay={true}
         />

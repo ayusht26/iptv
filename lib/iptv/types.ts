@@ -9,6 +9,7 @@ export type Channel = {
   categoryNames: string[];
   logo: string | null;
   streamUrl: string | null;
+  streamUrls: string[];
   quality: string | null;
   website: string | null;
 };
@@ -19,11 +20,6 @@ export type Category = {
 };
 
 export type Country = {
-  code: string;
-  name: string;
-};
-
-export type Language = {
   code: string;
   name: string;
 };
