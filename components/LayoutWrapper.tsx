@@ -4,14 +4,12 @@ import React, { useState, useEffect } from "react";
 import { TopNav } from "@/components/TopNav";
 import { Footer } from "@/components/Footer";
 import { QuickSearchModal } from "@/components/QuickSearchModal";
-import { Channel } from "@/lib/iptv/types";
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
-  channels: Channel[];
 }
 
-export function LayoutWrapper({ children, channels }: LayoutWrapperProps) {
+export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   // Listen for Ctrl+K / Cmd+K global shortcut
@@ -37,8 +35,8 @@ export function LayoutWrapper({ children, channels }: LayoutWrapperProps) {
       <QuickSearchModal
         isOpen={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}
-        channels={channels}
       />
     </>
   );
 }
+

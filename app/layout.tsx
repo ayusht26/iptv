@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Inter } from "next/font/google";
 import "./globals.css";
-import { fetchIPTVData } from "@/lib/iptv/fetch-channels";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 
 const geistDisplay = Geist({
@@ -27,13 +26,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { channels } = await fetchIPTVData();
-
   return (
     <html
       lang="en"
@@ -44,8 +41,9 @@ export default async function RootLayout({
         className="bg-canvas text-ink min-h-full flex flex-col selection:bg-accent-blue/30 selection:text-white"
         suppressHydrationWarning
       >
-        <LayoutWrapper channels={channels}>{children}</LayoutWrapper>
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
 }
+

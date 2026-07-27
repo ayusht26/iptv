@@ -2,8 +2,32 @@ import { Channel, Category, Country, StreamServer } from "./types";
 import { cache } from "react";
 import { fetchDLHDChannels } from "./dlhd-data";
 import { getLogoForDLHDChannel } from "./logo-mapper";
+import https from "node:https";
 
 const API_BASE = "https://iptv-org.github.io/api";
+
+function fetchJson<T>(url: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, (res) => {
+        if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+          return reject(new Error(`HTTP ${res.statusCode} for ${url}`));
+        }
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk) => chunks.push(chunk));
+        res.on("end", () => {
+          try {
+            const body = Buffer.concat(chunks).toString("utf-8");
+            resolve(JSON.parse(body));
+          } catch (e) {
+            reject(e);
+          }
+        });
+        res.on("error", reject);
+      })
+      .on("error", reject);
+  });
+}
 
 type ApiChannel = {
   id: string;
@@ -79,41 +103,24 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
   }
 
   try {
-    const fetchOpts: RequestInit = { next: { revalidate: 21600 } };
-
-    // Fetch IPTV-org data and DLHD channels in parallel
+    // Fetch IPTV-org data and DLHD channels in parallel using native node https
     const [
-      channelsRes,
-      streamsRes,
-      logosRes,
-      categoriesRes,
-      countriesRes,
-      blocklistRes,
+      apiChannels,
+      apiStreams,
+      apiLogos,
+      apiCategories,
+      apiCountries,
+      apiBlocklist,
       dlhdChannels,
     ] = await Promise.all([
-      fetch(`${API_BASE}/channels.json`, fetchOpts),
-      fetch(`${API_BASE}/streams.json`, fetchOpts),
-      fetch(`${API_BASE}/logos.json`, fetchOpts),
-      fetch(`${API_BASE}/categories.json`, fetchOpts),
-      fetch(`${API_BASE}/countries.json`, fetchOpts),
-      fetch(`${API_BASE}/blocklist.json`, fetchOpts).catch(() => null),
+      fetchJson<ApiChannel[]>(`${API_BASE}/channels.json`),
+      fetchJson<ApiStream[]>(`${API_BASE}/streams.json`),
+      fetchJson<ApiLogo[]>(`${API_BASE}/logos.json`),
+      fetchJson<ApiCategory[]>(`${API_BASE}/categories.json`),
+      fetchJson<ApiCountry[]>(`${API_BASE}/countries.json`),
+      fetchJson<{ channel: string }[]>(`${API_BASE}/blocklist.json`).catch(() => []),
       fetchDLHDChannels().catch(() => [] as Channel[]),
     ]);
-
-    const apiChannels: ApiChannel[] = await channelsRes.json();
-    const apiStreams: ApiStream[] = await streamsRes.json();
-    const apiLogos: ApiLogo[] = await logosRes.json();
-    const apiCategories: ApiCategory[] = await categoriesRes.json();
-    const apiCountries: ApiCountry[] = await countriesRes.json();
-
-    let apiBlocklist: { channel: string }[] = [];
-    if (blocklistRes && blocklistRes.ok) {
-      try {
-        apiBlocklist = await blocklistRes.json();
-      } catch {
-        apiBlocklist = [];
-      }
-    }
 
     const blocklistSet = new Set<string>();
     apiBlocklist.forEach((b) => {

@@ -1,64 +1,57 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Fuse from "fuse.js";
 import { Channel } from "@/lib/iptv/types";
 import { ChannelLogo } from "./ChannelLogo";
-import { Search, X, Tv, ArrowRight, CornerDownLeft, Sparkles } from "lucide-react";
+import { Search, X, Tv, ArrowRight, CornerDownLeft, Loader2 } from "lucide-react";
 
 interface QuickSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  channels: Channel[];
 }
 
-export function QuickSearchModal({
-  isOpen,
-  onClose,
-  channels,
-}: QuickSearchModalProps) {
+export function QuickSearchModal({ isOpen, onClose }: QuickSearchModalProps) {
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Channel[]>([]);
+  const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Preprocessed channels index for 60fps instant searching
-  const indexedChannels = useMemo(() => {
-    return channels.map((c) => ({
-      channel: c,
-      searchBlob: `${c.name} ${c.altNames.join(" ")} ${c.network || ""} ${c.countryName} ${c.country} ${c.categoryNames.join(" ")}`.toLowerCase(),
-    }));
-  }, [channels]);
+  // Fetch search results from /api/channels/search when isOpen or query changes
+  useEffect(() => {
+    if (!isOpen) return;
 
-  // Fast results calculation (< 3ms) with DLHD priority
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      // Show top channels prioritizing DLHD feeds when search is empty
-      return [...channels]
-        .sort((a, b) => (b.hasDlhd ? 1 : 0) - (a.hasDlhd ? 1 : 0))
-        .slice(0, 10);
-    }
+    let isMounted = true;
+    setLoading(true);
 
-    const matched: Channel[] = [];
-    for (let i = 0; i < indexedChannels.length; i++) {
-      if (indexedChannels[i].searchBlob.includes(q)) {
-        matched.push(indexedChannels[i].channel);
-      }
-    }
+    const controller = new AbortController();
+    const fetchTimer = setTimeout(() => {
+      fetch(`/api/channels/search?q=${encodeURIComponent(query.trim())}`, {
+        signal: controller.signal,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (isMounted) {
+            setResults(data.results || []);
+            setSelectedIndex(0);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (err.name !== "AbortError" && isMounted) {
+            setLoading(false);
+          }
+        });
+    }, 150);
 
-    // Sort search matches: DLHD channels FIRST, then logo channels, then rest
-    matched.sort((a, b) => {
-      if (a.hasDlhd && !b.hasDlhd) return -1;
-      if (!a.hasDlhd && b.hasDlhd) return 1;
-      if (a.logo && !b.logo) return -1;
-      if (!a.logo && b.logo) return 1;
-      return 0;
-    });
-
-    return matched.slice(0, 15);
-  }, [channels, indexedChannels, query]);
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearTimeout(fetchTimer);
+    };
+  }, [isOpen, query]);
 
   // Focus input when opened
   useEffect(() => {
@@ -114,11 +107,13 @@ export function QuickSearchModal({
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
-              setSelectedIndex(0);
             }}
             placeholder="Quick search channels, networks, countries..."
             className="w-full bg-transparent text-ink placeholder:text-ink-muted text-base px-3 focus:outline-none"
           />
+          {loading && (
+            <Loader2 className="w-4 h-4 text-accent-blue animate-spin shrink-0 mr-2" />
+          )}
           {query ? (
             <button
               onClick={() => setQuery("")}
@@ -198,13 +193,13 @@ export function QuickSearchModal({
                 </div>
               );
             })
-          ) : (
+          ) : !loading ? (
             <div className="p-8 text-center text-ink-muted space-y-2">
               <Tv className="w-8 h-8 mx-auto text-ink-muted/50" />
               <p className="text-sm font-medium">No channels match &quot;{query}&quot;</p>
               <p className="text-xs">Try searching by category, network or country code.</p>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Modal Footer Keyboard Instructions */}
@@ -222,3 +217,4 @@ export function QuickSearchModal({
     </div>
   );
 }
+
