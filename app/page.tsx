@@ -1,5 +1,6 @@
 import React from "react";
 import { fetchIPTVData } from "@/lib/iptv/fetch-channels";
+import { getPopularChannels } from "@/lib/iptv/popular-channels";
 import { HomeHeroActions } from "@/components/HomeHeroActions";
 import { ChannelCard } from "@/components/ChannelCard";
 import Link from "next/link";
@@ -10,8 +11,8 @@ export const revalidate = 21600;
 export default async function HomePage() {
   const { channels } = await fetchIPTVData();
 
-  // Top featured popular channels for the home preview grid
-  const featuredChannels = channels.slice(0, 8);
+  // Top featured popular channels for the home preview grid using popular scoring system
+  const featuredChannels = getPopularChannels(channels, 12);
 
   return (
     <div className="w-full space-y-16 py-8 md:py-16">

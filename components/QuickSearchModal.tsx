@@ -31,21 +31,33 @@ export function QuickSearchModal({
     }));
   }, [channels]);
 
-  // Fast results calculation (< 3ms)
+  // Fast results calculation (< 3ms) with DLHD priority
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) {
-      // Show top 8 popular/featured channels when search is empty
-      return channels.slice(0, 8);
+      // Show top channels prioritizing DLHD feeds when search is empty
+      return [...channels]
+        .sort((a, b) => (b.hasDlhd ? 1 : 0) - (a.hasDlhd ? 1 : 0))
+        .slice(0, 10);
     }
+
     const matched: Channel[] = [];
     for (let i = 0; i < indexedChannels.length; i++) {
       if (indexedChannels[i].searchBlob.includes(q)) {
         matched.push(indexedChannels[i].channel);
-        if (matched.length >= 12) break;
       }
     }
-    return matched;
+
+    // Sort search matches: DLHD channels FIRST, then logo channels, then rest
+    matched.sort((a, b) => {
+      if (a.hasDlhd && !b.hasDlhd) return -1;
+      if (!a.hasDlhd && b.hasDlhd) return 1;
+      if (a.logo && !b.logo) return -1;
+      if (!a.logo && b.logo) return 1;
+      return 0;
+    });
+
+    return matched.slice(0, 15);
   }, [channels, indexedChannels, query]);
 
   // Focus input when opened
@@ -158,6 +170,11 @@ export function QuickSearchModal({
                         <h4 className="text-sm font-semibold text-ink truncate">
                           {channel.name}
                         </h4>
+                        {channel.hasDlhd && (
+                          <span className="text-[9px] font-bold bg-accent-blue/15 text-accent-blue border border-accent-blue/30 px-1.5 py-0.2 rounded shrink-0">
+                            DLHD
+                          </span>
+                        )}
                         <span className="text-[10px] font-semibold bg-canvas text-ink-muted border border-hairline px-1.5 py-0.5 rounded-xs shrink-0">
                           {channel.country}
                         </span>

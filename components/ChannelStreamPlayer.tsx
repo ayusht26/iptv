@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Channel, StreamServer } from "@/lib/iptv/types";
 import { VideoPlayer } from "./VideoPlayer";
+import { VPNNoticeBanner } from "./VPNNoticeBanner";
 import { Server, Signal, Tv, ShieldCheck, RefreshCw, AlertCircle } from "lucide-react";
 
 interface ChannelStreamPlayerProps {
@@ -153,6 +154,11 @@ export function ChannelStreamPlayer({
             <span>Buffering or offline? Select another server above.</span>
           </div>
         )}
+      </div>
+
+      {/* Regional ISP / VPN Disclaimer Notice */}
+      <div className="pt-2">
+        <VPNNoticeBanner />
       </div>
     </div>
   );

@@ -64,13 +64,13 @@ export function ChannelBrowseGrid({
     }));
   }, [channels]);
 
-  // Non-blocking lightning search + active category/country filtering
+  // Non-blocking lightning search + active category/country filtering with DLHD Priority
   const filteredChannels = useMemo(() => {
     const query = deferredSearchQuery.trim().toLowerCase();
     const targetCat = (activeCategory || "").toLowerCase();
     const targetCountry = (activeCountry || "").toUpperCase();
 
-    return preprocessedChannels
+    const matched = preprocessedChannels
       .filter(({ lowerCountry, lowerCategories, searchBlob }) => {
         if (targetCat && !lowerCategories.includes(targetCat)) return false;
         if (targetCountry && lowerCountry.toUpperCase() !== targetCountry) return false;
@@ -78,6 +78,13 @@ export function ChannelBrowseGrid({
         return true;
       })
       .map(({ channel }) => channel);
+
+    // Prioritize DLHD channels first in all search and filter lists
+    return matched.sort((a, b) => {
+      if (a.hasDlhd && !b.hasDlhd) return -1;
+      if (!a.hasDlhd && b.hasDlhd) return 1;
+      return 0;
+    });
   }, [preprocessedChannels, deferredSearchQuery, activeCategory, activeCountry]);
 
   // Paginated channels to render
