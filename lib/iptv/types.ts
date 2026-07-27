@@ -23,3 +23,34 @@ export type Country = {
   code: string;
   name: string;
 };
+
+export type CustomChannelEpisode = {
+  id: string;
+  title: string;
+  season?: string;
+  episodeNumber?: number;
+  duration?: string;
+  thumbnail?: string;
+  streamUrl?: string;
+  embedUrl?: string;
+  servers?: {
+    name: string;
+    url: string;
+    type: "hls" | "mp4" | "iframe";
+  }[];
+};
+
+export type CustomChannel = {
+  id: string;
+  name: string;
+  slug: string;
+  shortSlug?: string;
+  description: string;
+  logo: string | null;
+  category: string;
+  badge?: string;
+  is247: boolean;
+  featured?: boolean;
+  episodes: CustomChannelEpisode[];
+  sourceUrl?: string;
+};
