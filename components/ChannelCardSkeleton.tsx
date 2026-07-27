@@ -2,7 +2,10 @@ import React from "react";
 
 export function ChannelCardSkeleton() {
   return (
-    <div className="bg-surface-1 border border-hairline rounded-lg p-3.5 flex flex-col justify-between h-[154px] animate-pulse">
+    <div className="bg-surface-1 border border-hairline rounded-lg p-3.5 flex flex-col justify-between h-[154px] relative overflow-hidden">
+      {/* Shimmer overlay */}
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+
       <div>
         <div className="flex items-start justify-between gap-3 mb-3">
           {/* Logo Skeleton */}

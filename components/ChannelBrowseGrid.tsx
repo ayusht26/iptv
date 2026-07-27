@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useDeferredValue, useTransition } from "react";
+import React, { useState, useMemo, useDeferredValue, useTransition, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Channel, Category, Country } from "@/lib/iptv/types";
 import { ChannelCard } from "./ChannelCard";
@@ -29,10 +29,27 @@ export function ChannelBrowseGrid({
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-  const [isPending] = useTransition();
+  const [isPending, startTransition] = useTransition();
+  const [hydrated, setHydrated] = useState(false);
 
   const activeCategory = searchParams.get("category") || initialCategory;
   const activeCountry = searchParams.get("country") || initialCountry;
+
+  // Mark component as hydrated after first paint
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  // Reset pagination when filters change
+  const prevCategoryRef = useRef(activeCategory);
+  const prevCountryRef = useRef(activeCountry);
+  useEffect(() => {
+    if (prevCategoryRef.current !== activeCategory || prevCountryRef.current !== activeCountry) {
+      prevCategoryRef.current = activeCategory;
+      prevCountryRef.current = activeCountry;
+      setVisibleCount(ITEMS_PER_PAGE);
+    }
+  }, [activeCategory, activeCountry]);
 
   // Pre-process channels for instant, 60fps search & filter (<0.5ms vs 200ms Fuse tree)
   const preprocessedChannels = useMemo(() => {
@@ -70,9 +87,12 @@ export function ChannelBrowseGrid({
 
   const hasMore = visibleCount < filteredChannels.length;
   const isSearching = searchQuery !== deferredSearchQuery;
+  const showSkeleton = !hydrated || isPending;
 
   const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
+    startTransition(() => {
+      setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
+    });
   };
 
   return (
@@ -147,7 +167,7 @@ export function ChannelBrowseGrid({
       </div>
 
       {/* Channel Grid with Skeleton Loading */}
-      {isPending ? (
+      {showSkeleton ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 12 }).map((_, i) => (
             <ChannelCardSkeleton key={i} />
@@ -163,7 +183,11 @@ export function ChannelBrowseGrid({
 
           {/* Load More Pagination Button */}
           {hasMore && (
-            <div className="flex justify-center pt-8">
+            <div className="flex flex-col items-center gap-3 pt-8">
+              <p className="text-xs text-ink-muted">
+                Showing {displayedChannels.length.toLocaleString()} of{" "}
+                {filteredChannels.length.toLocaleString()} channels
+              </p>
               <button
                 onClick={handleLoadMore}
                 className="inline-flex items-center gap-2 bg-surface-1 hover:bg-surface-2 border border-hairline text-ink font-medium text-sm px-6 py-3 rounded-pill transition-all active:scale-95 shadow-md"
