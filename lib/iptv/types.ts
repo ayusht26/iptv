@@ -1,3 +1,12 @@
+export type StreamServer = {
+  id: string;
+  name: string;
+  url: string;
+  type: "iframe" | "hls";
+  source: "dlhd" | "iptv-org";
+  isPrimary?: boolean;
+};
+
 export type Channel = {
   id: string;
   name: string;
@@ -10,8 +19,12 @@ export type Channel = {
   logo: string | null;
   streamUrl: string | null;
   streamUrls: string[];
+  servers: StreamServer[];
+  defaultServerId?: string;
   quality: string | null;
   website: string | null;
+  hasDlhd?: boolean;
+  hasIptvOrg?: boolean;
 };
 
 export type Category = {

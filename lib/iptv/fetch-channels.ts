@@ -1,5 +1,7 @@
-import { Channel, Category, Country } from "./types";
+import { Channel, Category, Country, StreamServer } from "./types";
 import { cache } from "react";
+import { fetchDLHDChannels } from "./dlhd-data";
+import { getLogoForDLHDChannel } from "./logo-mapper";
 
 const API_BASE = "https://iptv-org.github.io/api";
 
@@ -60,16 +62,26 @@ type ProcessedData = {
 let cachedData: { data: ProcessedData; timestamp: number } | null = null;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
+// Helper to normalize channel names for smart deduplication
+function normalizeChannelKey(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\b(hd|sd|fhd|uhd|4k|usa|us|uk|ca|au|channel|tv|network|stream|live)\b/gi, "")
+    .replace(/[^a-z0-9]/gi, "")
+    .trim();
+}
+
 export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
   const now = Date.now();
   if (cachedData && now - cachedData.timestamp < CACHE_TTL_MS) {
-    console.log("⚡ IPTV data served from in-memory cache");
+    console.log("⚡ IPTV & DLHD data served from in-memory cache");
     return cachedData.data;
   }
 
   try {
     const fetchOpts: RequestInit = { next: { revalidate: 21600 } };
 
+    // Fetch IPTV-org data and DLHD channels in parallel
     const [
       channelsRes,
       streamsRes,
@@ -77,6 +89,7 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       categoriesRes,
       countriesRes,
       blocklistRes,
+      dlhdChannels,
     ] = await Promise.all([
       fetch(`${API_BASE}/channels.json`, fetchOpts),
       fetch(`${API_BASE}/streams.json`, fetchOpts),
@@ -84,6 +97,7 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       fetch(`${API_BASE}/categories.json`, fetchOpts),
       fetch(`${API_BASE}/countries.json`, fetchOpts),
       fetch(`${API_BASE}/blocklist.json`, fetchOpts).catch(() => null),
+      fetchDLHDChannels().catch(() => [] as Channel[]),
     ]);
 
     const apiChannels: ApiChannel[] = await channelsRes.json();
@@ -91,7 +105,7 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
     const apiLogos: ApiLogo[] = await logosRes.json();
     const apiCategories: ApiCategory[] = await categoriesRes.json();
     const apiCountries: ApiCountry[] = await countriesRes.json();
-    
+
     let apiBlocklist: { channel: string }[] = [];
     if (blocklistRes && blocklistRes.ok) {
       try {
@@ -106,7 +120,7 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       if (b.channel) blocklistSet.add(b.channel);
     });
 
-    // Build Maps for fast O(1) lookups
+    // Build Maps for fast lookups
     const categoryMap = new Map<string, string>();
     apiCategories.forEach((cat) => {
       if (cat.id && cat.name) categoryMap.set(cat.id, cat.name);
@@ -117,7 +131,6 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       if (cou.code && cou.name) countryMap.set(cou.code, cou.name);
     });
 
-    // Map channelId to ALL stream URLs (fallback list for maximum stream playback reliability)
     const streamMap = new Map<string, { urls: string[]; quality: string | null }>();
     apiStreams.forEach((st) => {
       if (st.channel && st.url) {
@@ -147,14 +160,14 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       }
     });
 
-    // Process and filter channels
-    const channels: Channel[] = [];
+    // Process IPTV-org channels
+    const iptvChannels: Channel[] = [];
+    const iptvChannelKeyMap = new Map<string, Channel>();
 
     apiChannels.forEach((ch) => {
       if (ch.closed || ch.is_nsfw || blocklistSet.has(ch.id)) return;
 
       const streamInfo = streamMap.get(ch.id);
-
       const categories = ch.categories || [];
       const categoryNames = categories
         .map((catId) => categoryMap.get(catId) || catId)
@@ -162,8 +175,17 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
 
       const country = ch.country || "UNKNOWN";
       const countryName = countryMap.get(country) || country;
+      const iptvLogo = logoMap.get(ch.id) || null;
 
-      channels.push({
+      const hlsServers: StreamServer[] = (streamInfo?.urls || []).map((url, idx) => ({
+        id: `iptv-${ch.id}-${idx}`,
+        name: idx === 0 ? "IPTV HLS Primary" : `IPTV HLS Feed ${idx + 1}`,
+        url,
+        type: "hls",
+        source: "iptv-org",
+      }));
+
+      const channelObj: Channel = {
         id: ch.id,
         name: ch.name || ch.id,
         altNames: ch.alt_names || [],
@@ -172,24 +194,94 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
         countryName,
         categories,
         categoryNames,
-        logo: logoMap.get(ch.id) || null,
+        logo: iptvLogo,
         streamUrl: streamInfo?.urls[0] || null,
         streamUrls: streamInfo?.urls || [],
+        servers: hlsServers,
+        defaultServerId: hlsServers[0]?.id,
         quality: streamInfo?.quality || null,
         website: ch.website || null,
-      });
+        hasDlhd: false,
+        hasIptvOrg: true,
+      };
+
+      iptvChannels.push(channelObj);
+      const normKey = normalizeChannelKey(channelObj.name);
+      if (normKey && !iptvChannelKeyMap.has(normKey)) {
+        iptvChannelKeyMap.set(normKey, channelObj);
+      }
     });
 
-    // Used categories and countries
+    // Merge DLHD channels into IPTV channels with DLHD priority
+    const finalChannelsMap = new Map<string, Channel>();
+
+    // First add all IPTV channels
+    iptvChannels.forEach((ch) => {
+      finalChannelsMap.set(ch.id, ch);
+    });
+
+    // Process DLHD channels
+    dlhdChannels.forEach((dlhdCh) => {
+      const normKey = normalizeChannelKey(dlhdCh.name);
+      const matchedIptvChannel = normKey ? iptvChannelKeyMap.get(normKey) : null;
+
+      if (matchedIptvChannel) {
+        // Channel exists in BOTH IPTV-org and DLHD!
+        // Merge DLHD servers with IPTV servers, giving DLHD top priority.
+        const combinedServers = [...dlhdCh.servers, ...matchedIptvChannel.servers];
+        const combinedCategories = Array.from(
+          new Set([...dlhdCh.categories, ...matchedIptvChannel.categories])
+        );
+        const combinedCategoryNames = Array.from(
+          new Set([...dlhdCh.categoryNames, ...matchedIptvChannel.categoryNames])
+        );
+
+        const mergedChannel: Channel = {
+          ...matchedIptvChannel,
+          // Give DLHD priority by placing DLHD server first as default
+          streamUrl: dlhdCh.servers[0].url,
+          servers: combinedServers,
+          defaultServerId: dlhdCh.servers[0].id,
+          hasDlhd: true,
+          hasIptvOrg: true,
+          logo:
+            matchedIptvChannel.logo ||
+            getLogoForDLHDChannel(dlhdCh.name, dlhdCh.logo, logoMap) ||
+            dlhdCh.logo,
+          categories: combinedCategories,
+          categoryNames: combinedCategoryNames,
+        };
+
+        finalChannelsMap.set(matchedIptvChannel.id, mergedChannel);
+      } else {
+        // DLHD unique channel
+        const resolvedLogo =
+          getLogoForDLHDChannel(dlhdCh.name, dlhdCh.logo, logoMap) || dlhdCh.logo;
+
+        finalChannelsMap.set(dlhdCh.id, {
+          ...dlhdCh,
+          logo: resolvedLogo,
+        });
+      }
+    });
+
+    const mergedChannelsList = Array.from(finalChannelsMap.values());
+
+    // Used categories and countries calculation
     const usedCategoryIds = new Set<string>();
     const usedCountryCodes = new Set<string>();
 
-    channels.forEach((c) => {
+    mergedChannelsList.forEach((c) => {
       c.categories.forEach((cat) => usedCategoryIds.add(cat));
       if (c.country) usedCountryCodes.add(c.country);
     });
 
+    // Make sure Sports category is included
+    usedCategoryIds.add("sports");
+
     const categories = apiCategories
+      .concat([{ id: "sports", name: "Sports" }])
+      .filter((c, idx, arr) => arr.findIndex((x) => x.id === c.id) === idx)
       .filter((c) => usedCategoryIds.has(c.id))
       .map((c) => ({ id: c.id, name: c.name }))
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -200,16 +292,16 @@ export const fetchIPTVData = cache(async (): Promise<ProcessedData> => {
       .sort((a, b) => a.name.localeCompare(b.name));
 
     const result: ProcessedData = {
-      channels,
+      channels: mergedChannelsList,
       categories,
       countries,
     };
 
     cachedData = { data: result, timestamp: now };
-    console.log("🌐 IPTV data successfully fetched & cached into memory");
+    console.log(`🌐 Total ${mergedChannelsList.length} unified channels cached`);
     return result;
   } catch (error) {
-    console.error("Error fetching IPTV data:", error);
+    console.error("Error fetching IPTV & DLHD data:", error);
     if (cachedData) return cachedData.data;
 
     return {

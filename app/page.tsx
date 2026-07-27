@@ -19,16 +19,16 @@ export default async function HomePage() {
       <section className="text-center max-w-3xl mx-auto space-y-6 px-4">
         <div className="inline-flex items-center gap-2 bg-surface-1 border border-hairline px-3.5 py-1.5 rounded-pill text-xs text-ink-muted shadow-sm">
           <span className="w-2 h-2 rounded-full bg-semantic-success animate-pulse" />
-          <span>Over 38,000 Public Live Channels</span>
+          <span>Over 39,000 Live Sports & TV Channels</span>
         </div>
 
         <h1 className="display-xxl tracking-tight text-ink font-medium leading-[0.9]">
-          Watch TV. <br />
+          Watch Sports & TV. <br />
           <span className="text-ink-muted">Anywhere.</span>
         </h1>
 
         <p className="text-base md:text-lg text-ink-muted leading-relaxed max-w-xl mx-auto">
-          A clean, focused live streaming experience. Browse thousands of publicly available live channels by category and country — no account needed.
+          A clean, focused live streaming experience. Stream thousands of sports and live channels across multiple server feeds — no account needed.
         </p>
 
         <div className="flex justify-center">

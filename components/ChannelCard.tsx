@@ -24,7 +24,12 @@ export function ChannelCard({ channel }: ChannelCardProps) {
         <div className="flex items-start justify-between gap-3 mb-3">
           <ChannelLogo src={channel.logo} name={channel.name} className="w-12 h-12" />
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+            {channel.hasDlhd && (
+              <span className="text-[9px] font-bold bg-accent-blue/15 text-accent-blue border border-accent-blue/30 px-1.5 py-0.5 rounded-xs uppercase tracking-wider">
+                DLHD
+              </span>
+            )}
             {channel.quality && (
               <span className="text-[10px] font-semibold bg-canvas text-ink-muted border border-hairline px-1.5 py-0.5 rounded-xs tracking-wider">
                 {channel.quality}
@@ -57,7 +62,13 @@ export function ChannelCard({ channel }: ChannelCardProps) {
         {hasStream ? (
           <span className="inline-flex items-center gap-1 text-[11px]">
             <Signal className="w-3 h-3 text-semantic-success animate-pulse" />
-            <span>Live HLS</span>
+            <span>
+              {channel.hasDlhd
+                ? "Live DLHD"
+                : channel.servers && channel.servers.length > 1
+                ? `${channel.servers.length} Feeds`
+                : "Live HLS"}
+            </span>
           </span>
         ) : (
           <span className="inline-flex items-center gap-1 text-[11px] text-ink-muted">

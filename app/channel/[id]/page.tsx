@@ -1,10 +1,10 @@
 import { fetchIPTVData } from "@/lib/iptv/fetch-channels";
-import { VideoPlayer } from "@/components/VideoPlayer";
+import { ChannelStreamPlayer } from "@/components/ChannelStreamPlayer";
 import { ChannelLogo } from "@/components/ChannelLogo";
 import { ChannelCard } from "@/components/ChannelCard";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Globe, Info, Radio, Signal, Sparkles } from "lucide-react";
+import { ArrowLeft, Globe, Info, Radio, Signal, Sparkles, Tv } from "lucide-react";
 import type { Metadata } from "next";
 
 export const revalidate = 21600;
@@ -61,7 +61,7 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
     )
     .slice(0, 4);
 
-  const hasStream = Boolean(channel.streamUrl);
+  const hasStream = (channel.servers && channel.servers.length > 0) || Boolean(channel.streamUrl);
 
   return (
     <div className="w-full space-y-8 py-4">
@@ -79,13 +79,8 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
       {/* Main Player / Details Chrome Panel */}
       <div className="bg-surface-1 border border-hairline rounded-xl p-3 md:p-6 space-y-6 shadow-2xl">
         {hasStream ? (
-          /* HLS Video Player */
-          <VideoPlayer
-            src={channel.streamUrl!}
-            streamUrls={channel.streamUrls}
-            channelName={channel.name}
-            autoPlay={true}
-          />
+          /* Multi-Server Channel Stream Player */
+          <ChannelStreamPlayer channel={channel} autoPlay={true} />
         ) : (
           /* No Stream Available Card Placeholder */
           <div className="w-full aspect-video bg-surface-2 rounded-xl border border-hairline p-6 md:p-12 flex flex-col items-center justify-center text-center space-y-4 shadow-inner relative overflow-hidden">
@@ -100,7 +95,7 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
               </span>
               <h2 className="text-xl md:text-2xl font-semibold text-ink">{channel.name}</h2>
               <p className="text-xs md:text-sm text-ink-muted leading-relaxed">
-                This channel is listed in the IPTV database, but no active HLS broadcast stream URL is currently provided for in-browser playback.
+                This channel is listed in the IPTV database, but no active broadcast stream URL is currently provided for in-browser playback.
               </p>
             </div>
 
@@ -127,14 +122,20 @@ export default async function ChannelWatchPage({ params }: ChannelPageProps) {
               className="w-14 h-14 md:w-16 md:h-16"
             />
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="display-md text-ink font-semibold">
                   {channel.name}
                 </h1>
+                {channel.hasDlhd && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-accent-blue/15 text-accent-blue border border-accent-blue/30 px-2 py-0.5 rounded-full">
+                    <Tv className="w-2.5 h-2.5" />
+                    DLHD Live Sports
+                  </span>
+                )}
                 {hasStream ? (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-canvas text-semantic-success border border-hairline px-2 py-0.5 rounded-full">
                     <Signal className="w-2.5 h-2.5 animate-pulse" />
-                    Live HLS
+                    Live ({channel.servers.length} Feeds Available)
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-canvas text-ink-muted border border-hairline px-2 py-0.5 rounded-full">
