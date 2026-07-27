@@ -12,6 +12,7 @@ export type ShowConfig = {
   category: string;
   description: string;
   sourceUrl: string;
+  imageUrl: string;
   seasons: ShowSeasonInfo[];
 };
 
@@ -25,6 +26,7 @@ export const SHOWS_DATA: Record<string, ShowConfig> = {
     category: "Cartoons",
     description: "Non-stop 24/7 live stream of Doraemon episodes! Plays random continuous episodes.",
     sourceUrl: "https://piratexplay.cc/series/doraemon-season-15-65733",
+    imageUrl: "/assets/doraemon_logo.png",
     seasons: [
       { season: 1, episodesCount: 52 },
       { season: 2, episodesCount: 51 },
@@ -52,6 +54,7 @@ export const SHOWS_DATA: Record<string, ShowConfig> = {
     category: "Anime",
     description: "Continuous 24/7 stream of Pokémon episodes from Season 1 to Season 20!",
     sourceUrl: "https://piratexplay.cc/series/pokemon-season-23-60572/",
+    imageUrl: "/assets/pokemon_logo.jpg",
     seasons: [
       { season: 1, episodesCount: 82 },
       { season: 2, episodesCount: 63 },
@@ -84,6 +87,7 @@ export const SHOWS_DATA: Record<string, ShowConfig> = {
     category: "Cartoons",
     description: "24/7 non-stop funny episodes of Crayon Shin-chan in continuous 24/7 stream!",
     sourceUrl: "https://piratexplay.cc/series/shin-chan-season-4-30623",
+    imageUrl: "/assets/shinchan_logo.jpg",
     seasons: [
       { season: 1, episodesCount: 263 },
       { season: 2, episodesCount: 52 },
@@ -105,6 +109,7 @@ export const SHOWS_DATA: Record<string, ShowConfig> = {
     category: "Cartoons",
     description: "It's Hero Time! 24/7 non-stop Ben 10 classic alien adventures.",
     sourceUrl: "https://piratexplay.cc/series/ben-10-season-1-4686/",
+    imageUrl: "/assets/ben10_logo.jpg",
     seasons: [
       { season: 1, episodesCount: 13 },
       { season: 2, episodesCount: 13 },
@@ -121,6 +126,7 @@ export const SHOWS_DATA: Record<string, ShowConfig> = {
     category: "Anime",
     description: "24/7 Ninja action! Believe it! Continuous stream of classic Naruto episodes.",
     sourceUrl: "https://piratexplay.cc/series/naruto-season-1-46260/",
+    imageUrl: "/assets/Naruto_logo.svg",
     seasons: [
       { season: 1, episodesCount: 57 },
       { season: 2, episodesCount: 104 },
@@ -142,6 +148,7 @@ export const SHOWS_DATA: Record<string, ShowConfig> = {
     category: "Cartoons",
     description: "Non-stop 24/7 web-slinging superhero action with Peter Parker & S.H.I.E.L.D.!",
     sourceUrl: "https://piratexplay.cc/series/marvel-s-ultimate-spider-man-season-1-34391",
+    imageUrl: "/assets/spiderman_logo.png",
     seasons: [
       { season: 1, episodesCount: 26 },
       { season: 2, episodesCount: 26 },

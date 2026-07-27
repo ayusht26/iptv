@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useDeferredValue } from "react";
 import { CustomChannel } from "@/lib/iptv/types";
 import { CustomChannelCard } from "./CustomChannelCard";
-import { Search, X, Sparkles, SlidersHorizontal, Film } from "lucide-react";
+import { Search, X, Sparkles, SlidersHorizontal, Film, ShieldAlert } from "lucide-react";
 
 interface CustomChannelsBrowseGridProps {
   channels: CustomChannel[];
@@ -66,6 +66,27 @@ export function CustomChannelsBrowseGrid({ channels }: CustomChannelsBrowseGridP
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
+          </div>
+        </div>
+
+        {/* Disclaimer / External Sources & AdBlocker Notice Banner */}
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-start gap-3 text-amber-200/90 text-xs shadow-sm">
+          <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-1 leading-relaxed">
+            <span className="font-semibold text-amber-300 block">External Source Disclaimer & Ad-Blocker Suggestion</span>
+            <p className="text-amber-200/80">
+              Streams on custom 24/7 channels are fetched from external third-party servers and may trigger popups or ads.
+              We recommend using a trusted ad-blocker like{" "}
+              <a
+                href="https://ublockorigin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline font-bold hover:text-white transition-colors"
+              >
+                uBlock Origin
+              </a>{" "}
+              for a seamless, ad-free viewing experience.
+            </p>
           </div>
         </div>
 

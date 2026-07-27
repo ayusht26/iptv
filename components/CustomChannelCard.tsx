@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { CustomChannel } from "@/lib/iptv/types";
 import { Signal, Play } from "lucide-react";
-import { getShowLogo } from "@/components/icons/ShowLogos";
+import { ShowLogo } from "@/components/icons/ShowLogos";
 
 interface CustomChannelCardProps {
   channel: CustomChannel;
@@ -37,8 +37,8 @@ export function CustomChannelCard({ channel, onWatch }: CustomChannelCardProps) 
 
         {/* Logo & Channel Details */}
         <div className="flex items-start gap-4 pt-1">
-          <div className="w-14 h-14 rounded-2xl bg-canvas border border-hairline flex items-center justify-center p-2 shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-inner">
-            {getShowLogo(channel.id, "w-9 h-9")}
+          <div className="w-14 h-14 rounded-2xl bg-white border border-hairline flex items-center justify-center p-1.5 shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-inner">
+            <ShowLogo showId={channel.id} className="w-full h-full object-contain rounded-lg" />
           </div>
 
           <div className="space-y-1 min-w-0 flex-1">
